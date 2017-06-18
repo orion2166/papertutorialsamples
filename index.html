@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+        <meta charset="utf-8">
+        <meta charset="UTF-8">
+        <title>Paper Project Samples</title>
+        <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+        <script type="text/javascript" src="paperjavascript/docs/assets/js/paper.js"></script>
+    </head>
+    <body>
+        <script type="text/paperscript" canvas="mycanvas">
+        
+        var beef_web_group = 0;
+        var pork_web_group = 0;
+        var chicken_web_group = 0;
+        var fish_web_group = 0;
+        var vegies_web_group = 0;
+        
+        var values = {
+            paths: 16,
+            minPoints: 5,
+            maxPoints: 15,
+            minRadius: 30,
+            maxRadius: 90
+        };
+        
+        
+        function createfirstPaths(center_point,segment_array,web_group) {
+
+            var current_segment = 0;
+            var previous_segment = 0;
+            
+            for(count = 0;count < segment_array.length;count++){
+                current_segment = segment_array[count];
+                if(previous_segment != 0)
+                {
+                    var path = new Path.Line({
+                        from: previous_segment.point,
+                        to: current_segment.point,
+                        strokeColor: 'black'
+                    });
+                    
+                    web_group.addChild(path);
+
+                    path = new Path.Line({
+                        from: previous_segment.point,
+                        to: new Point(center_point.position.x,center_point.position.y),
+                        strokeColor: 'black'
+                    });
+                    web_group.addChild(path);
+                    
+                    previous_segment = current_segment;    
+
+                }else{
+                    previous_segment = current_segment;
+                }
+                var spidernodes = new Path.Circle(segment_array[count].point, 5);
+                spidernodes.fillColor = 'black'
+                web_group.addChild(spidernodes);
+            }
+            var path = new Path.Line({
+                from: previous_segment.point,
+                to: segment_array[0].point,
+                strokeColor: 'black'
+            });
+           web_group.addChild(path);
+
+            path = new Path.Line({
+                from: previous_segment.point,
+                to: new Point(center_point.position.x,center_point.position.y),
+                strokeColor: 'black'
+            });
+            web_group.addChild(path);
+
+
+        }
+        
+        
+        function createouterpaths(center_point,segment_array,web_group) {
+            var current_segment = 0;
+            var previous_segment = 0;
+            var angle_direction = [];
+            for(count = 0;count < segment_array.length;count++){
+                current_segment = segment_array[count];
+                if(previous_segment != 0)
+                {
+                    var path = new Path.Line({
+                        from: previous_segment.point,
+                        to: current_segment.point,
+                        strokeColor: 'black'
+                    });
+                   web_group.addChild(path);
+                    path = new Path.Line({
+                        from: current_segment.point,
+                        to: center_point[count].point,
+                        strokeColor: 'black'
+                    });
+                    web_group.addChild(path);
+                    previous_segment = current_segment;    
+
+                }else{
+                    previous_segment = current_segment;
+                    path = new Path.Line({
+                        from: previous_segment.point,
+                        to: center_point[count].point,
+                        strokeColor: 'black'
+                    });
+                    web_group.addChild(path);
+                }
+                var spidernodes = new Path.Circle(segment_array[count].point, 5);
+                spidernodes.fillColor = 'black'
+                web_group.addChild(spidernodes);
+            }
+            var path = new Path.Line({
+                from: previous_segment.point,
+                to: segment_array[0].point,
+                strokeColor: 'black'
+            });
+            web_group.addChild(path);
+
+        }
+
+// ********************************************************************************************          
+// Item Objects Defined
+// ********************************************************************************************  
+        
+        var rectangle = new Rectangle(new Point(0, 0), new Point(250, 200));
+        var meat = new Path.Rectangle(rectangle);
+        meat.style = {
+            fillColor: 'white',
+            strokeColor: 'black'
+        };
+
+        var beef = new Path.Circle(new Point(50, 50), 25);
+        beef.fillColor = 'red'
+        
+        var pork = new Path.Circle(new Point(110, 50), 25);
+        pork.fillColor = 'orange'
+        
+        var fish = new Path.Circle(new Point(170, 50), 25);
+        fish.fillColor = 'Salmon '
+        
+        var chicken = new Path.Circle(new Point(50, 110), 25);
+        chicken.fillColor = 'Coral'
+        
+        var vegetable = new Path.Circle(new Point(110, 110), 25);
+        vegetable.fillColor = 'green'
+
+
+// ********************************************************************************************        
+//        beef mouse movements
+// ********************************************************************************************
+
+
+        beef.onMouseDrag = function(event) {
+            if(beef_web_group != 0){
+                beef.position += event.delta;
+                beef_web_group.position += event.delta;
+            } else{
+                beef.position += event.delta;
+            }
+            
+        }
+        
+        beef.onMouseUp = function(event) {
+            console.log(this.isInside(rectangle));
+            if (this.isInside(rectangle)) {
+                console.log(beef_web_group.remove());
+                this.position = new Point(50, 50);
+                beef_web_group = 0;
+            } else {
+                
+                if (beef_web_group == 0){
+                    
+                    beef_web_group = new Group();
+                    include = new Group();
+                    exclude = new Group(); 
+
+                    var decagon = new Path.RegularPolygon(new Point(this.position.x,this.position.y), 7,200);
+                    var segment_array = decagon.segments;
+                    createfirstPaths(this, segment_array,include);
+                    decagon.fillColor = 'green';
+                    include.addChild(decagon);
+                    decagon.sendToBack();
+
+                    var decagonsecond = new Path.RegularPolygon(new Point(this.position.x,this.position.y), 7,300);
+                    var segment_array_second = decagonsecond.segments;
+                    decagonsecond.fillColor = 'red';
+                    createouterpaths(segment_array, segment_array_second, exclude);
+                    exclude.addChild(decagonsecond);
+                    decagonsecond.sendToBack();
+
+                    beef_web_group.addChildren([exclude,include])
+                    this.bringToFront();
+                    
+                }
+            }
+        }
+        
+// ********************************************************************************************        
+//        pork mouse movements
+// ********************************************************************************************
+        
+        
+        
+        pork.onMouseDrag = function(event) {
+            if(pork_web_group != 0){
+                pork.position += event.delta;
+                pork_web_group.position += event.delta;
+            } else{
+                pork.position += event.delta;
+            }
+            
+        }
+        
+        pork.onMouseUp = function(event) {
+        
+            if (this.isInside(rectangle)) {
+                console.log(pork_web_group.remove());
+                this.position = new Point(110, 50);
+                pork_web_group = 0;
+                
+            } else {
+                if (pork_web_group == 0){
+                    pork_web_group = new Group();
+                    include = new Group();
+                    exclude = new Group(); 
+
+                    var decagon = new Path.RegularPolygon(new Point(this.position.x,this.position.y), 7,200);
+                    var segment_array = decagon.segments;
+                    createfirstPaths(this, segment_array,include);
+                    decagon.fillColor = 'green';
+                    include.addChild(decagon);
+                    decagon.sendToBack();
+
+                    var decagonsecond = new Path.RegularPolygon(new Point(this.position.x,this.position.y), 7,300);
+                    var segment_array_second = decagonsecond.segments;
+                    decagonsecond.fillColor = 'red';
+                    createouterpaths(segment_array, segment_array_second, exclude);
+                    exclude.addChild(decagonsecond);
+                    decagonsecond.sendToBack();
+
+                    pork_web_group.addChildren([exclude,include])
+                    this.bringToFront();
+                }
+            }
+        }
+        
+// ********************************************************************************************        
+//        fish mouse movements
+// ********************************************************************************************
+        
+        
+        
+        fish.onMouseDrag = function(event) {
+            if(fish_web_group != 0){
+                fish.position += event.delta;
+                fish_web_group.position += event.delta;
+            } else{
+                fish.position += event.delta;
+            }
+            
+        }
+        
+        fish.onMouseUp = function(event) {
+        
+            if (this.isInside(rectangle)) {
+                console.log(fish_web_group.remove());
+                this.position = new Point(170, 50);
+                fish_web_group = 0;
+                
+            } else {
+                if (fish_web_group == 0){
+                    fish_web_group = new Group();
+                    include = new Group();
+                    exclude = new Group(); 
+
+                    var decagon = new Path.RegularPolygon(new Point(this.position.x,this.position.y), 7,200);
+                    var segment_array = decagon.segments;
+                    createfirstPaths(this, segment_array,include);
+                    decagon.fillColor = 'green';
+                    include.addChild(decagon);
+                    decagon.sendToBack();
+
+                    var decagonsecond = new Path.RegularPolygon(new Point(this.position.x,this.position.y), 7,300);
+                    var segment_array_second = decagonsecond.segments;
+                    decagonsecond.fillColor = 'red';
+                    createouterpaths(segment_array, segment_array_second, exclude);
+                    exclude.addChild(decagonsecond);
+                    decagonsecond.sendToBack();
+
+                    fish_web_group.addChildren([exclude,include])
+                    this.bringToFront();
+                }
+            }
+        }
+
+// ********************************************************************************************        
+//        chicken mouse movements
+// ********************************************************************************************
+        
+        
+        
+        chicken.onMouseDrag = function(event) {
+            if(chicken_web_group != 0){
+                chicken.position += event.delta;
+                chicken_web_group.position += event.delta;
+            } else{
+                chicken.position += event.delta;
+            }
+            
+        }
+        
+        chicken.onMouseUp = function(event) {
+        
+            if (this.isInside(rectangle)) {
+                console.log(chicken_web_group.remove());
+                this.position = new Point(50, 110);
+                chicken_web_group = 0;
+                
+            } else {
+                if (chicken_web_group == 0){
+                    chicken_web_group = new Group();
+                    include = new Group();
+                    exclude = new Group(); 
+
+                    var decagon = new Path.RegularPolygon(new Point(this.position.x,this.position.y), 7,200);
+                    var segment_array = decagon.segments;
+                    createfirstPaths(this, segment_array,include);
+                    decagon.fillColor = 'green';
+                    include.addChild(decagon);
+                    decagon.sendToBack();
+
+                    var decagonsecond = new Path.RegularPolygon(new Point(this.position.x,this.position.y), 7,300);
+                    var segment_array_second = decagonsecond.segments;
+                    decagonsecond.fillColor = 'red';
+                    createouterpaths(segment_array, segment_array_second, exclude);
+                    exclude.addChild(decagonsecond);
+                    decagonsecond.sendToBack();
+
+                    chicken_web_group.addChildren([exclude,include])
+                    this.bringToFront();
+                }
+            }
+        }
+        
+        
+        
+// ********************************************************************************************        
+//        vegetable mouse movements
+// ********************************************************************************************
+        
+        
+        
+        vegetable.onMouseDrag = function(event) {
+            if(vegies_web_group != 0){
+                vegetable.position += event.delta;
+                vegies_web_group.position += event.delta;
+            } else{
+                vegetable.position += event.delta;
+            }
+            
+        }
+        
+        vegetable.onMouseUp = function(event) {
+        
+            if (this.isInside(rectangle)) {
+                console.log(vegies_web_group.remove());
+                this.position = new Point(110, 110);
+                vegies_web_group = 0;
+                
+            } else {
+                if (vegies_web_group == 0){
+                    vegies_web_group = new Group();
+                    include = new Group();
+                    exclude = new Group(); 
+
+                    var decagon = new Path.RegularPolygon(new Point(this.position.x,this.position.y), 7,200);
+                    var segment_array = decagon.segments;
+                    createfirstPaths(this, segment_array,include);
+                    decagon.fillColor = 'green';
+                    include.addChild(decagon);
+                    decagon.sendToBack();
+
+                    var decagonsecond = new Path.RegularPolygon(new Point(this.position.x,this.position.y), 7,300);
+                    var segment_array_second = decagonsecond.segments;
+                    decagonsecond.fillColor = 'red';
+                    createouterpaths(segment_array, segment_array_second, exclude);
+                    exclude.addChild(decagonsecond);
+                    decagonsecond.sendToBack();
+
+                    vegies_web_group.addChildren([exclude,include])
+                    this.bringToFront();
+                }
+            }
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+     
+        </script>
+        <canvas id='mycanvas' rezise="true"></canvas>
+    </body>
+</html>
